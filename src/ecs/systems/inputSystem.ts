@@ -15,8 +15,15 @@ export const runInputSystem = (world: EcsWorld): void => {
   const snapshot = normalizeInput(world.adapters.readInputSnapshot());
   world.inputState = snapshot;
 
-  world.inputIntents.forEach((intent) => {
-    intent.moveX = snapshot.moveX;
-    intent.moveY = snapshot.moveY;
-  });
+  if (world.playerEntityId === null) {
+    return;
+  }
+
+  const playerIntent = world.inputIntents.get(world.playerEntityId);
+  if (!playerIntent) {
+    return;
+  }
+
+  playerIntent.moveX = snapshot.moveX;
+  playerIntent.moveY = snapshot.moveY;
 };

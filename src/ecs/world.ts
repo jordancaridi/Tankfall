@@ -2,12 +2,17 @@ import { createEntityRegistry, type EntityRegistry, type EntityId } from './enti
 import type { AimComponent } from './components/AimComponent';
 import type { CollisionRadiusComponent } from './components/CollisionRadiusComponent';
 import type { DamageableComponent } from './components/DamageableComponent';
+import type { FactionComponent } from './components/FactionComponent';
 import type { InputIntentComponent } from './components/InputIntentComponent';
 import type { KinematicsComponent } from './components/KinematicsComponent';
 import type { ProjectileComponent } from './components/ProjectileComponent';
 import type { ProjectileTag } from './components/ProjectileTag';
+import type { TargetComponent } from './components/TargetComponent';
 import type { TransformComponent, Vector2 } from './components/TransformComponent';
 import type { WeaponComponent } from './components/WeaponComponent';
+import type { AIStateComponent } from './components/AIStateComponent';
+import type { ContactDamageComponent } from './components/ContactDamageComponent';
+import type { EnemyArchetypeComponent } from './components/EnemyArchetypeComponent';
 import type { ProjectilePool } from './projectilePool';
 
 export interface InputSnapshot {
@@ -54,6 +59,11 @@ export interface EcsWorld {
   projectiles: ComponentStore<ProjectileComponent>;
   projectileTags: ComponentStore<ProjectileTag>;
   damageables: ComponentStore<DamageableComponent>;
+  factions: ComponentStore<FactionComponent>;
+  targets: ComponentStore<TargetComponent>;
+  aiStates: ComponentStore<AIStateComponent>;
+  contactDamages: ComponentStore<ContactDamageComponent>;
+  enemyArchetypes: ComponentStore<EnemyArchetypeComponent>;
   collisionRadii: ComponentStore<CollisionRadiusComponent>;
   systems: RegisteredSystem[];
   adapters: SimulationAdapters;
@@ -89,6 +99,11 @@ export const createWorld = (adapters: Partial<SimulationAdapters> = {}): EcsWorl
     projectiles: new Map(),
     projectileTags: new Map(),
     damageables: new Map(),
+    factions: new Map(),
+    targets: new Map(),
+    aiStates: new Map(),
+    contactDamages: new Map(),
+    enemyArchetypes: new Map(),
     collisionRadii: new Map(),
     systems: [],
     adapters: {

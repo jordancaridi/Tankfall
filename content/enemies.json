@@ -1,3 +1,16 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "scout",
+      "hp": 35,
+      "moveSpeed": 5,
+      "turnRate": 8,
+      "preferredRange": 1.75,
+      "collisionRadius": 0.9,
+      "attack": {
+        "damagePerHit": 7,
+        "hitCooldown": 0.5
+      }
+    }
+  ]
 }

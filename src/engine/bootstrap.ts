@@ -9,6 +9,7 @@ import {
   Vector3
 } from '@babylonjs/core';
 import '@babylonjs/loaders';
+import { gameConfig } from '../content/gameConfig';
 import { createEntity } from '../ecs/entity';
 import { createProjectilePool } from '../ecs/projectilePool';
 import type { AimComponent } from '../ecs/components/AimComponent';
@@ -19,10 +20,15 @@ import type { WeaponComponent } from '../ecs/components/WeaponComponent';
 import { runAimSystem } from '../ecs/systems/aimSystem';
 import { runCameraFollowSystem } from '../ecs/systems/cameraFollowSystem';
 import { runCollisionSystem } from '../ecs/systems/collisionSystem';
+import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
 import { runDamageSystem } from '../ecs/systems/damageSystem';
+import { runAISystem } from '../ecs/systems/aiSystem';
+import { createEnemySpawnSystem } from '../ecs/systems/enemySpawnSystem';
 import { runInputSystem } from '../ecs/systems/inputSystem';
 import { runMovementSystem } from '../ecs/systems/movementSystem';
 import { runProjectileSystem } from '../ecs/systems/projectileSystem';
+import { runSteeringSystem } from '../ecs/systems/steeringSystem';
+import { runTargetingSystem } from '../ecs/systems/targetingSystem';
 import { runWeaponSystem } from '../ecs/systems/weaponSystem';
 import { createWorld, registerSystem, updateSimulation } from '../ecs/world';
 import { createFixedTimestepLoop } from './fixedTimestepLoop';
@@ -111,24 +117,23 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   world.weapons.set(playerEntityId, player.weapon);
   world.damageables.set(playerEntityId, { hp: 100, maxHp: 100 });
   world.collisionRadii.set(playerEntityId, { radius: 1.2 });
-
-  const targetEntityId = createEntity(world.entities);
-  world.transforms.set(targetEntityId, {
-    position: { x: 0, y: 15 },
-    rotationHull: 0,
-    rotationTurret: 0
-  });
-  world.damageables.set(targetEntityId, { hp: 100, maxHp: 100 });
-  world.collisionRadii.set(targetEntityId, { radius: 1.4 });
+  world.factions.set(playerEntityId, { team: 'player' });
 
   world.projectilePool = createProjectilePool(world, 64);
 
+  const runEnemySpawnSystem = createEnemySpawnSystem(gameConfig, runtimeConfig.testMode);
+
   registerSystem(world, 'InputSystem', runInputSystem);
+  registerSystem(world, 'EnemySpawnSystem', runEnemySpawnSystem);
+  registerSystem(world, 'TargetingSystem', runTargetingSystem);
+  registerSystem(world, 'AISystem', runAISystem);
+  registerSystem(world, 'SteeringSystem', runSteeringSystem);
   registerSystem(world, 'AimSystem', runAimSystem);
   registerSystem(world, 'MovementSystem', runMovementSystem);
   registerSystem(world, 'WeaponSystem', runWeaponSystem);
   registerSystem(world, 'ProjectileSystem', runProjectileSystem);
   registerSystem(world, 'CollisionSystem', runCollisionSystem);
+  registerSystem(world, 'ContactDamageSystem', runContactDamageSystem);
   registerSystem(world, 'DamageSystem', runDamageSystem);
   registerSystem(world, 'CameraFollowSystem', runCameraFollowSystem);
 
@@ -164,11 +169,9 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   turret.material = tankMaterial;
   barrel.material = tankMaterial;
 
-  const targetMesh = MeshBuilder.CreateCylinder('dummy-target', { diameter: 2.8, height: 2 }, scene);
-  targetMesh.position.y = 1;
-  const targetMaterial = new StandardMaterial('target-mat', scene);
-  targetMaterial.diffuseColor = new Color3(0.88, 0.3, 0.22);
-  targetMesh.material = targetMaterial;
+  const enemyMeshes = new Map<number, ReturnType<typeof MeshBuilder.CreateCylinder>>();
+  const enemyMaterial = new StandardMaterial('enemy-mat', scene);
+  enemyMaterial.diffuseColor = new Color3(0.82, 0.18, 0.18);
 
   const projectileMeshes = new Map<number, ReturnType<typeof MeshBuilder.CreateSphere>>();
   world.projectiles.forEach((_, entityId) => {
@@ -204,17 +207,27 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
         turret.rotation.y = transform.rotationTurret;
       }
 
-      const targetTransform = world.transforms.get(targetEntityId);
-      if (targetTransform) {
-        targetMesh.position.x = targetTransform.position.x;
-        targetMesh.position.z = targetTransform.position.y;
-      }
+      world.factions.forEach((faction, entityId) => {
+        if (faction.team !== 'enemy') {
+          return;
+        }
 
-      const targetDamageable = world.damageables.get(targetEntityId);
-      if (targetDamageable) {
-        const ratio = targetDamageable.maxHp <= 0 ? 0 : targetDamageable.hp / targetDamageable.maxHp;
-        targetMaterial.diffuseColor = new Color3(0.88, 0.3 * ratio, 0.22 * ratio);
-      }
+        const transformEnemy = world.transforms.get(entityId);
+        if (!transformEnemy) {
+          return;
+        }
+
+        let enemyMesh = enemyMeshes.get(entityId);
+        if (!enemyMesh) {
+          enemyMesh = MeshBuilder.CreateCylinder(`enemy-${entityId}`, { diameter: 1.8, height: 1.4 }, scene);
+          enemyMesh.material = enemyMaterial;
+          enemyMesh.position.y = 0.7;
+          enemyMeshes.set(entityId, enemyMesh);
+        }
+
+        enemyMesh.position.x = transformEnemy.position.x;
+        enemyMesh.position.z = transformEnemy.position.y;
+      });
 
       world.projectiles.forEach((projectile, entityId) => {
         const mesh = projectileMeshes.get(entityId);
