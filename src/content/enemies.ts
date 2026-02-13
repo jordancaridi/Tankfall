@@ -9,6 +9,9 @@ export interface EnemyDefinition {
   collisionRadius: number;
   contactDamage: number;
   contactCooldown: number;
+  rangedDamage: number;
+  rangedCooldown: number;
+  rangedRange: number;
 }
 
 interface EnemiesContentFile {

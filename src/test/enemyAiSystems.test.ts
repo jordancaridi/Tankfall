@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import { createEntity } from '../ecs/entity';
 import { runAISystem } from '../ecs/systems/aiSystem';
 import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
+import { runEnemyRangedAttackSystem } from '../ecs/systems/enemyRangedAttackSystem';
 import { computeSteeringIntent } from '../ecs/systems/steeringSystem';
 import { createWorld } from '../ecs/world';
 
@@ -84,5 +85,31 @@ describe('Enemy AI systems', () => {
     assert.lengthOf(world.damageQueue, 3);
     assert.deepInclude(world.damageQueue, { targetEntityId: playerId, sourceEntityId: enemyId, amount: 5 });
     assert.closeTo(world.contactDamages.get(enemyId)!.cooldownRemaining, 0.5, 0.000001);
+  });
+
+  it('applies ranged damage with cooldown timing in attack state', () => {
+    const { world, playerId, enemyId } = setupEnemy();
+    world.aiStates.set(enemyId, { state: 'attack', attackCooldownRemainingSec: 0 });
+    world.transforms.get(enemyId)!.position.y = 4;
+
+    runEnemyRangedAttackSystem(world, 0.1);
+    assert.lengthOf(world.damageQueue, 1);
+    assert.deepInclude(world.damageQueue, { targetEntityId: playerId, sourceEntityId: enemyId, amount: 3 });
+
+    runEnemyRangedAttackSystem(world, 0.2);
+    assert.lengthOf(world.damageQueue, 1);
+
+    runEnemyRangedAttackSystem(world, 1.0);
+    assert.lengthOf(world.damageQueue, 2);
+  });
+
+  it('does not fire ranged attack if target is out of ranged range', () => {
+    const { world, enemyId } = setupEnemy();
+    world.aiStates.set(enemyId, { state: 'attack', attackCooldownRemainingSec: 0 });
+    world.transforms.get(enemyId)!.position.y = 12;
+
+    runEnemyRangedAttackSystem(world, 1);
+
+    assert.lengthOf(world.damageQueue, 0);
   });
 });

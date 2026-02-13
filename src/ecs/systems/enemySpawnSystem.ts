@@ -5,8 +5,6 @@ import type { SpawnDirectorStateComponent } from '../components/SpawnDirectorSta
 import type { EcsWorld } from '../world';
 
 const DIRECTOR_ENTITY_ID = 0;
-const SPAWN_RADIUS = 38;
-
 export interface DifficultyMultipliers {
   hp: number;
   damage: number;
@@ -95,12 +93,17 @@ const spawnEnemy = (
   directorState.rngState = selection.nextState;
 
   const definition = getEnemyDefinition(selection.enemyId);
-  const angleRoll = randomFloat01(directorState.rngState);
-  directorState.rngState = angleRoll.nextState;
+  const spawnXRoll = randomFloat01(directorState.rngState);
+  directorState.rngState = spawnXRoll.nextState;
+  const spawnYRoll = randomFloat01(directorState.rngState);
+  directorState.rngState = spawnYRoll.nextState;
 
-  const spawnAngle = angleRoll.value * Math.PI * 2;
-  const spawnX = Math.cos(spawnAngle) * SPAWN_RADIUS;
-  const spawnY = Math.sin(spawnAngle) * SPAWN_RADIUS;
+  const minX = config.worldBounds.minX + config.worldBoundsPadding;
+  const maxX = config.worldBounds.maxX - config.worldBoundsPadding;
+  const minY = config.worldBounds.minY + config.worldBoundsPadding;
+  const maxY = config.worldBounds.maxY - config.worldBoundsPadding;
+  const spawnX = minX + spawnXRoll.value * (maxX - minX);
+  const spawnY = minY + spawnYRoll.value * (maxY - minY);
 
   const enemyId = createEntity(world.entities);
   world.transforms.set(enemyId, {
@@ -120,7 +123,7 @@ const spawnEnemy = (
   world.damageables.set(enemyId, { hp: scaledHp, maxHp: scaledHp });
   world.collisionRadii.set(enemyId, { radius: definition.collisionRadius });
   world.factions.set(enemyId, { team: 'enemy' });
-  world.aiStates.set(enemyId, { state: 'acquire' });
+  world.aiStates.set(enemyId, { state: 'acquire', attackCooldownRemainingSec: 0 });
   world.enemyArchetypes.set(enemyId, { enemyId: definition.id });
   world.contactDamages.set(enemyId, {
     damagePerHit: definition.contactDamage * multipliers.damage,

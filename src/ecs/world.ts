@@ -15,6 +15,8 @@ import type { ContactDamageComponent } from './components/ContactDamageComponent
 import type { EnemyArchetypeComponent } from './components/EnemyArchetypeComponent';
 import type { SpawnDirectorStateComponent } from './components/SpawnDirectorStateComponent';
 import type { ProjectilePool } from './projectilePool';
+import type { UISnapshot } from '../ui/uiSnapshot';
+import { defaultUISnapshot } from '../ui/uiSnapshot';
 
 export interface InputSnapshot {
   moveX: number;
@@ -39,6 +41,7 @@ export interface DamageEvent {
 export interface SimulationAdapters {
   readInputSnapshot: () => InputSnapshot;
   writeCameraTarget: (target: CameraTarget) => void;
+  writeUISnapshot: (snapshot: UISnapshot) => void;
 }
 
 export type ComponentStore<T> = Map<EntityId, T>;
@@ -74,6 +77,7 @@ export interface EcsWorld {
   damageQueue: DamageEvent[];
   inputState: InputSnapshot;
   projectilePool: ProjectilePool | null;
+  uiSnapshot: UISnapshot;
 }
 
 const createNoopAdapters = (): SimulationAdapters => ({
@@ -85,7 +89,8 @@ const createNoopAdapters = (): SimulationAdapters => ({
     firePrimary: false,
     aimWorldOverride: null
   }),
-  writeCameraTarget: () => undefined
+  writeCameraTarget: () => undefined,
+  writeUISnapshot: () => undefined
 });
 
 export const createWorld = (adapters: Partial<SimulationAdapters> = {}): EcsWorld => {
@@ -111,13 +116,15 @@ export const createWorld = (adapters: Partial<SimulationAdapters> = {}): EcsWorl
     systems: [],
     adapters: {
       readInputSnapshot: adapters.readInputSnapshot ?? defaults.readInputSnapshot,
-      writeCameraTarget: adapters.writeCameraTarget ?? defaults.writeCameraTarget
+      writeCameraTarget: adapters.writeCameraTarget ?? defaults.writeCameraTarget,
+      writeUISnapshot: adapters.writeUISnapshot ?? defaults.writeUISnapshot
     },
     playerEntityId: null,
     deadEntities: new Set(),
     damageQueue: [],
     inputState: defaults.readInputSnapshot(),
-    projectilePool: null
+    projectilePool: null,
+    uiSnapshot: defaultUISnapshot
   };
 };
 

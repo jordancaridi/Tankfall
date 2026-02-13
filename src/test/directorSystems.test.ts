@@ -122,4 +122,24 @@ describe('Spawn director systems', () => {
 
     assert.equal(countEnemyIds(world).length, gameConfig.director.maxActiveEnemies);
   });
+
+  it('spawns enemies inside world bounds with padding', () => {
+    const world = setupWorld();
+    const runSpawn = createEnemySpawnSystem(gameConfig, 21);
+
+    for (let i = 0; i < 180; i += 1) {
+      runSpawn(world, 1 / 60);
+    }
+
+    const enemyIds = countEnemyIds(world);
+    assert.isAbove(enemyIds.length, 0);
+
+    enemyIds.forEach((enemyId) => {
+      const position = world.transforms.get(enemyId)!.position;
+      assert.isAtLeast(position.x, gameConfig.worldBounds.minX + gameConfig.worldBoundsPadding);
+      assert.isAtMost(position.x, gameConfig.worldBounds.maxX - gameConfig.worldBoundsPadding);
+      assert.isAtLeast(position.y, gameConfig.worldBounds.minY + gameConfig.worldBoundsPadding);
+      assert.isAtMost(position.y, gameConfig.worldBounds.maxY - gameConfig.worldBoundsPadding);
+    });
+  });
 });

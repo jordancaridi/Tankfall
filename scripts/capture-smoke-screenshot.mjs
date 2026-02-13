@@ -35,7 +35,7 @@ const run = async () => {
   try {
     await waitForServer('http://127.0.0.1:4173');
 
-    const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+    const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     await page.goto('http://127.0.0.1:4173/?testMode=1&seed=123');
     await page.waitForFunction(() => window.__GAME_READY__ === true);

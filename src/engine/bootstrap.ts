@@ -21,8 +21,10 @@ import { runAimSystem } from '../ecs/systems/aimSystem';
 import { runCameraFollowSystem } from '../ecs/systems/cameraFollowSystem';
 import { runCollisionSystem } from '../ecs/systems/collisionSystem';
 import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
+import { runEnemyRangedAttackSystem } from '../ecs/systems/enemyRangedAttackSystem';
 import { runDamageSystem } from '../ecs/systems/damageSystem';
 import { runAISystem } from '../ecs/systems/aiSystem';
+import { createBoundsSystem } from '../ecs/systems/boundsSystem';
 import { createEnemySpawnSystem } from '../ecs/systems/enemySpawnSystem';
 import { runCleanupSystem } from '../ecs/systems/cleanupSystem';
 import { runInputSystem } from '../ecs/systems/inputSystem';
@@ -31,8 +33,11 @@ import { runProjectileSystem } from '../ecs/systems/projectileSystem';
 import { runSteeringSystem } from '../ecs/systems/steeringSystem';
 import { runTargetingSystem } from '../ecs/systems/targetingSystem';
 import { runWeaponSystem } from '../ecs/systems/weaponSystem';
+import { runUISyncSystem } from '../ecs/systems/uiSyncSystem';
 import { createWorld, registerSystem, updateSimulation } from '../ecs/world';
 import { createFixedTimestepLoop } from './fixedTimestepLoop';
+import { setUISnapshot } from '../ui/uiSnapshotStore';
+import { defaultUISnapshot } from '../ui/uiSnapshot';
 import { createKeyboardInputTracker } from './keyboardInput';
 import type { RuntimeConfig } from './runtimeConfig';
 
@@ -104,6 +109,9 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
     writeCameraTarget: (target) => {
       cameraTargetState.x = target.x;
       cameraTargetState.y = target.y;
+    },
+    writeUISnapshot: (snapshot) => {
+      setUISnapshot(snapshot);
     }
   });
 
@@ -123,6 +131,7 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   world.projectilePool = createProjectilePool(world, 64);
 
   const runEnemySpawnSystem = createEnemySpawnSystem(gameConfig, runtimeConfig.seed);
+  const runBoundsSystem = createBoundsSystem(gameConfig);
 
   registerSystem(world, 'InputSystem', runInputSystem);
   registerSystem(world, 'EnemyCleanupSystem', runCleanupSystem);
@@ -132,11 +141,14 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   registerSystem(world, 'SteeringSystem', runSteeringSystem);
   registerSystem(world, 'AimSystem', runAimSystem);
   registerSystem(world, 'MovementSystem', runMovementSystem);
+  registerSystem(world, 'BoundsSystem', runBoundsSystem);
   registerSystem(world, 'WeaponSystem', runWeaponSystem);
   registerSystem(world, 'ProjectileSystem', runProjectileSystem);
   registerSystem(world, 'CollisionSystem', runCollisionSystem);
   registerSystem(world, 'ContactDamageSystem', runContactDamageSystem);
+  registerSystem(world, 'EnemyRangedAttackSystem', runEnemyRangedAttackSystem);
   registerSystem(world, 'DamageSystem', runDamageSystem);
+  registerSystem(world, 'UISyncSystem', runUISyncSystem);
   registerSystem(world, 'CameraFollowSystem', runCameraFollowSystem);
 
   const engine = new Engine(canvas, true, {
@@ -308,6 +320,7 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
       scene.dispose();
       engine.dispose();
       window.__GAME_READY__ = false;
+      setUISnapshot(defaultUISnapshot);
     }
   };
 };
