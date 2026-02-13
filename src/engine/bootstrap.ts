@@ -9,15 +9,73 @@ import {
   Vector3
 } from '@babylonjs/core';
 import '@babylonjs/loaders';
-import type { RuntimeConfig } from './runtimeConfig';
+import { createEntity } from '../ecs/entity';
+import type { InputIntentComponent } from '../ecs/components/InputIntentComponent';
+import type { KinematicsComponent } from '../ecs/components/KinematicsComponent';
+import type { TransformComponent } from '../ecs/components/TransformComponent';
+import { runCameraFollowSystem } from '../ecs/systems/cameraFollowSystem';
+import { runInputSystem } from '../ecs/systems/inputSystem';
+import { runMovementSystem } from '../ecs/systems/movementSystem';
+import { createWorld, registerSystem, updateSimulation } from '../ecs/world';
 import { createFixedTimestepLoop } from './fixedTimestepLoop';
+import { createKeyboardInputTracker } from './keyboardInput';
+import type { RuntimeConfig } from './runtimeConfig';
 
 export interface GameRuntime {
   dispose: () => void;
 }
 
+interface CameraTargetState {
+  x: number;
+  y: number;
+}
+
+const createPlayerComponents = (): {
+  transform: TransformComponent;
+  kinematics: KinematicsComponent;
+  inputIntent: InputIntentComponent;
+} => ({
+  transform: {
+    position: { x: 0, y: 0 },
+    rotationHull: 0,
+    rotationTurret: 0
+  },
+  kinematics: {
+    velocity: { x: 0, y: 0 },
+    moveSpeed: 10,
+    turnRateHull: 0
+  },
+  inputIntent: {
+    moveX: 0,
+    moveY: 0
+  }
+});
+
 export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeConfig): GameRuntime => {
   window.__GAME_READY__ = false;
+
+  const keyboardInput = createKeyboardInputTracker(window);
+  const cameraTargetState: CameraTargetState = { x: 0, y: 0 };
+
+  const world = createWorld({
+    readInputSnapshot: keyboardInput.getSnapshot,
+    writeCameraTarget: (target) => {
+      cameraTargetState.x = target.x;
+      cameraTargetState.y = target.y;
+    }
+  });
+
+  const playerEntityId = createEntity(world.entities);
+  world.playerEntityId = playerEntityId;
+
+  const player = createPlayerComponents();
+  world.transforms.set(playerEntityId, player.transform);
+  world.kinematics.set(playerEntityId, player.kinematics);
+  world.inputIntents.set(playerEntityId, player.inputIntent);
+
+  registerSystem(world, 'InputSystem', runInputSystem);
+  registerSystem(world, 'MovementSystem', runMovementSystem);
+  registerSystem(world, 'CameraFollowSystem', runCameraFollowSystem);
 
   const engine = new Engine(canvas, true, {
     adaptToDeviceRatio: true,
@@ -45,11 +103,18 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   tankBody.material = tankMaterial;
 
   const loop = createFixedTimestepLoop({
-    updateSimulation: () => {
-      // TODO(spec): wire ECS simulation updates here.
+    updateSimulation: (fixedDtSeconds) => {
+      updateSimulation(world, fixedDtSeconds);
       void runtimeConfig.seed;
     },
     render: () => {
+      const transform = world.playerEntityId === null ? undefined : world.transforms.get(world.playerEntityId);
+      if (transform) {
+        tankBody.position.x = transform.position.x;
+        tankBody.position.z = transform.position.y;
+      }
+
+      camera.setTarget(new Vector3(cameraTargetState.x, 0, cameraTargetState.y));
       scene.render();
     },
     onFirstRender: () => {
@@ -66,6 +131,7 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   return {
     dispose: () => {
       loop.stop();
+      keyboardInput.dispose();
       window.removeEventListener('resize', handleResize);
       scene.dispose();
       engine.dispose();
