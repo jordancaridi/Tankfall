@@ -141,7 +141,6 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   scene.clearColor.set(0.02, 0.03, 0.08, 1.0);
 
   const camera = new ArcRotateCamera('iso-camera', Math.PI / 4, Math.PI / 3, 40, Vector3.Zero(), scene);
-  camera.attachControl(canvas, true);
   camera.wheelDeltaPercentage = 0.01;
 
   new HemisphericLight('sun-light', new Vector3(0.2, 1, 0.2), scene).intensity = 0.95;
@@ -155,10 +154,15 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   tankBody.position.y = 0.65;
   const turret = MeshBuilder.CreateBox('tank-turret', { width: 1.2, depth: 1.8, height: 0.7 }, scene);
   turret.position.y = 1.3;
+  const barrel = MeshBuilder.CreateBox('tank-barrel', { width: 0.3, depth: 2.4, height: 0.3 }, scene);
+  barrel.parent = turret;
+  barrel.position.z = 1.6;
+  barrel.position.y = 0.05;
   const tankMaterial = new StandardMaterial('tank-mat', scene);
   tankMaterial.diffuseColor = runtimeConfig.testMode ? new Color3(0.2, 0.45, 0.88) : new Color3(0.28, 0.44, 0.33);
   tankBody.material = tankMaterial;
   turret.material = tankMaterial;
+  barrel.material = tankMaterial;
 
   const targetMesh = MeshBuilder.CreateCylinder('dummy-target', { diameter: 2.8, height: 2 }, scene);
   targetMesh.position.y = 1;
