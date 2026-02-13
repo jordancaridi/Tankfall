@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import { createEntity } from '../ecs/entity';
 import { runAISystem } from '../ecs/systems/aiSystem';
 import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
-import { createEnemySpawnSystem } from '../ecs/systems/enemySpawnSystem';
 import { computeSteeringIntent } from '../ecs/systems/steeringSystem';
 import { createWorld } from '../ecs/world';
 
@@ -85,32 +84,5 @@ describe('Enemy AI systems', () => {
     assert.lengthOf(world.damageQueue, 3);
     assert.deepInclude(world.damageQueue, { targetEntityId: playerId, sourceEntityId: enemyId, amount: 5 });
     assert.closeTo(world.contactDamages.get(enemyId)!.cooldownRemaining, 0.5, 0.000001);
-  });
-
-  it('spawns one scout enemy once and does not duplicate', () => {
-    const world = createWorld();
-    const playerId = createEntity(world.entities);
-    world.playerEntityId = playerId;
-    world.damageables.set(playerId, { hp: 100, maxHp: 100 });
-    world.factions.set(playerId, { team: 'player' });
-
-    const runEnemySpawnSystem = createEnemySpawnSystem(
-      {
-        enemySpawnTestEnabled: true,
-        enemySpawnPos: { x: 4, y: 6 },
-        enemyId: 'scout'
-      },
-      false
-    );
-
-    runEnemySpawnSystem(world);
-    runEnemySpawnSystem(world);
-
-    const aliveEnemyEntities = Array.from(world.factions.entries()).filter(([entityId, faction]) => {
-      const damageable = world.damageables.get(entityId);
-      return faction.team === 'enemy' && damageable && damageable.hp > 0;
-    });
-
-    assert.lengthOf(aliveEnemyEntities, 1);
   });
 });

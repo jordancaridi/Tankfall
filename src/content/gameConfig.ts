@@ -1,12 +1,27 @@
 import * as gameConfigJson from '../../content/gameConfig.json';
 
 export interface GameConfig {
-  enemySpawnTestEnabled: boolean;
-  enemySpawnPos: {
-    x: number;
-    y: number;
+  simHz: number;
+  director: {
+    maxActiveEnemies: number;
+    spawnBudgetPerSec: number;
+    spawnIntervalSec: number;
+    eliteEnabled: boolean;
+    archetypeWeights: Array<{
+      enemyId: string;
+      weight: number;
+    }>;
+    difficulty: {
+      timeScale: {
+        hpMultPerMin: number;
+        damageMultPerMin: number;
+        spawnRateMultPerMin: number;
+      };
+    };
   };
-  enemyId: string;
+  deterministic: {
+    seedDefault: number;
+  };
 }
 
 const rawConfig = gameConfigJson as GameConfig & { default?: GameConfig };

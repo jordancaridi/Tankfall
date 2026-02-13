@@ -24,6 +24,7 @@ import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
 import { runDamageSystem } from '../ecs/systems/damageSystem';
 import { runAISystem } from '../ecs/systems/aiSystem';
 import { createEnemySpawnSystem } from '../ecs/systems/enemySpawnSystem';
+import { runCleanupSystem } from '../ecs/systems/cleanupSystem';
 import { runInputSystem } from '../ecs/systems/inputSystem';
 import { runMovementSystem } from '../ecs/systems/movementSystem';
 import { runProjectileSystem } from '../ecs/systems/projectileSystem';
@@ -121,9 +122,10 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
 
   world.projectilePool = createProjectilePool(world, 64);
 
-  const runEnemySpawnSystem = createEnemySpawnSystem(gameConfig, runtimeConfig.testMode);
+  const runEnemySpawnSystem = createEnemySpawnSystem(gameConfig, runtimeConfig.seed);
 
   registerSystem(world, 'InputSystem', runInputSystem);
+  registerSystem(world, 'EnemyCleanupSystem', runCleanupSystem);
   registerSystem(world, 'EnemySpawnSystem', runEnemySpawnSystem);
   registerSystem(world, 'TargetingSystem', runTargetingSystem);
   registerSystem(world, 'AISystem', runAISystem);
@@ -169,7 +171,14 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   turret.material = tankMaterial;
   barrel.material = tankMaterial;
 
-  const enemyMeshes = new Map<number, ReturnType<typeof MeshBuilder.CreateCylinder>>();
+  const enemyMeshes = new Map<
+    number,
+    {
+      hull: ReturnType<typeof MeshBuilder.CreateBox>;
+      turret: ReturnType<typeof MeshBuilder.CreateBox>;
+      barrel: ReturnType<typeof MeshBuilder.CreateBox>;
+    }
+  >();
   const enemyMaterial = new StandardMaterial('enemy-mat', scene);
   enemyMaterial.diffuseColor = new Color3(0.82, 0.18, 0.18);
 
@@ -219,14 +228,45 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
 
         let enemyMesh = enemyMeshes.get(entityId);
         if (!enemyMesh) {
-          enemyMesh = MeshBuilder.CreateCylinder(`enemy-${entityId}`, { diameter: 1.8, height: 1.4 }, scene);
-          enemyMesh.material = enemyMaterial;
-          enemyMesh.position.y = 0.7;
+          const hull = MeshBuilder.CreateBox(`enemy-hull-${entityId}`, { width: 2.2, depth: 2.8, height: 1 }, scene);
+          hull.position.y = 0.6;
+          hull.material = enemyMaterial;
+          const turretEnemy = MeshBuilder.CreateBox(
+            `enemy-turret-${entityId}`,
+            { width: 1.1, depth: 1.5, height: 0.65 },
+            scene
+          );
+          turretEnemy.position.y = 1.15;
+          turretEnemy.material = enemyMaterial;
+          const barrelEnemy = MeshBuilder.CreateBox(
+            `enemy-barrel-${entityId}`,
+            { width: 0.25, depth: 2.1, height: 0.25 },
+            scene
+          );
+          barrelEnemy.parent = turretEnemy;
+          barrelEnemy.position.z = 1.35;
+          barrelEnemy.position.y = 0.04;
+          barrelEnemy.material = enemyMaterial;
+          enemyMesh = { hull, turret: turretEnemy, barrel: barrelEnemy };
           enemyMeshes.set(entityId, enemyMesh);
         }
 
-        enemyMesh.position.x = transformEnemy.position.x;
-        enemyMesh.position.z = transformEnemy.position.y;
+        enemyMesh.hull.position.x = transformEnemy.position.x;
+        enemyMesh.hull.position.z = transformEnemy.position.y;
+        enemyMesh.hull.rotation.y = transformEnemy.rotationHull;
+        enemyMesh.turret.position.x = transformEnemy.position.x;
+        enemyMesh.turret.position.z = transformEnemy.position.y;
+        enemyMesh.turret.rotation.y = transformEnemy.rotationHull;
+      });
+
+      enemyMeshes.forEach((meshGroup, entityId) => {
+        if (world.factions.get(entityId)?.team === 'enemy') {
+          return;
+        }
+
+        meshGroup.hull.dispose();
+        meshGroup.turret.dispose();
+        enemyMeshes.delete(entityId);
       });
 
       world.projectiles.forEach((projectile, entityId) => {
