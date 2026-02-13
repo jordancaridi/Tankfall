@@ -17,7 +17,8 @@ describe('MovementSystem', () => {
     world.kinematics.set(entityId, {
       velocity: { x: 0, y: 0 },
       moveSpeed: 6,
-      turnRateHull: 0
+      turnRateHull: 0,
+      turnRateTurret: 0
     });
 
     world.inputIntents.set(entityId, { moveX: 1, moveY: 0 });
@@ -57,7 +58,8 @@ describe('MovementSystem', () => {
     world.kinematics.set(entityId, {
       velocity: { x: 99, y: -21 },
       moveSpeed: 8,
-      turnRateHull: 0
+      turnRateHull: 0,
+      turnRateTurret: 0
     });
 
     world.inputIntents.set(entityId, { moveX: 0, moveY: 0 });
