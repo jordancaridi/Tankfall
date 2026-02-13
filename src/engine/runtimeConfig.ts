@@ -1,9 +1,11 @@
+import { gameConfig } from '../content/gameConfig';
+
 export interface RuntimeConfig {
   seed: number;
   testMode: boolean;
 }
 
-const DEFAULT_SEED = 123;
+const DEFAULT_SEED = gameConfig.deterministic.seedDefault;
 
 export const parseRuntimeConfig = (search: string): RuntimeConfig => {
   const params = new URLSearchParams(search);

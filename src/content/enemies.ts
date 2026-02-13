@@ -1,10 +1,5 @@
 import * as enemiesJson from '../../content/enemies.json';
 
-export interface EnemyAttackDefinition {
-  damagePerHit: number;
-  hitCooldown: number;
-}
-
 export interface EnemyDefinition {
   id: string;
   hp: number;
@@ -12,8 +7,8 @@ export interface EnemyDefinition {
   turnRate: number;
   preferredRange: number;
   collisionRadius: number;
-  model?: string;
-  attack?: EnemyAttackDefinition;
+  contactDamage: number;
+  contactCooldown: number;
 }
 
 interface EnemiesContentFile {

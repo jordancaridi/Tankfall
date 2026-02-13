@@ -7,10 +7,28 @@
       "turnRate": 8,
       "preferredRange": 1.75,
       "collisionRadius": 0.9,
-      "attack": {
-        "damagePerHit": 7,
-        "hitCooldown": 0.5
-      }
+      "contactDamage": 7,
+      "contactCooldown": 0.5
+    },
+    {
+      "id": "bruiser",
+      "hp": 70,
+      "moveSpeed": 3.4,
+      "turnRate": 5.2,
+      "preferredRange": 1.6,
+      "collisionRadius": 1.2,
+      "contactDamage": 14,
+      "contactCooldown": 0.8
+    },
+    {
+      "id": "gunner",
+      "hp": 50,
+      "moveSpeed": 4.2,
+      "turnRate": 6.5,
+      "preferredRange": 2.4,
+      "collisionRadius": 1,
+      "contactDamage": 9,
+      "contactCooldown": 0.65
     }
   ]
 }

@@ -13,6 +13,7 @@ import type { WeaponComponent } from './components/WeaponComponent';
 import type { AIStateComponent } from './components/AIStateComponent';
 import type { ContactDamageComponent } from './components/ContactDamageComponent';
 import type { EnemyArchetypeComponent } from './components/EnemyArchetypeComponent';
+import type { SpawnDirectorStateComponent } from './components/SpawnDirectorStateComponent';
 import type { ProjectilePool } from './projectilePool';
 
 export interface InputSnapshot {
@@ -64,6 +65,7 @@ export interface EcsWorld {
   aiStates: ComponentStore<AIStateComponent>;
   contactDamages: ComponentStore<ContactDamageComponent>;
   enemyArchetypes: ComponentStore<EnemyArchetypeComponent>;
+  spawnDirectorStates: ComponentStore<SpawnDirectorStateComponent>;
   collisionRadii: ComponentStore<CollisionRadiusComponent>;
   systems: RegisteredSystem[];
   adapters: SimulationAdapters;
@@ -104,6 +106,7 @@ export const createWorld = (adapters: Partial<SimulationAdapters> = {}): EcsWorl
     aiStates: new Map(),
     contactDamages: new Map(),
     enemyArchetypes: new Map(),
+    spawnDirectorStates: new Map(),
     collisionRadii: new Map(),
     systems: [],
     adapters: {

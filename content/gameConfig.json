@@ -1,8 +1,24 @@
 {
-  "enemySpawnTestEnabled": true,
-  "enemySpawnPos": {
-    "x": 12,
-    "y": 12
+  "simHz": 60,
+  "director": {
+    "maxActiveEnemies": 18,
+    "spawnBudgetPerSec": 1.35,
+    "spawnIntervalSec": 0,
+    "eliteEnabled": false,
+    "archetypeWeights": [
+      { "enemyId": "scout", "weight": 6 },
+      { "enemyId": "bruiser", "weight": 2 },
+      { "enemyId": "gunner", "weight": 3 }
+    ],
+    "difficulty": {
+      "timeScale": {
+        "hpMultPerMin": 0.12,
+        "damageMultPerMin": 0.1,
+        "spawnRateMultPerMin": 0.18
+      }
+    }
   },
-  "enemyId": "scout"
+  "deterministic": {
+    "seedDefault": 123
+  }
 }
