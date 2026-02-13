@@ -1,16 +1,33 @@
 import { createEntityRegistry, type EntityRegistry, type EntityId } from './entity';
+import type { AimComponent } from './components/AimComponent';
+import type { CollisionRadiusComponent } from './components/CollisionRadiusComponent';
+import type { DamageableComponent } from './components/DamageableComponent';
 import type { InputIntentComponent } from './components/InputIntentComponent';
 import type { KinematicsComponent } from './components/KinematicsComponent';
-import type { TransformComponent } from './components/TransformComponent';
+import type { ProjectileComponent } from './components/ProjectileComponent';
+import type { ProjectileTag } from './components/ProjectileTag';
+import type { TransformComponent, Vector2 } from './components/TransformComponent';
+import type { WeaponComponent } from './components/WeaponComponent';
+import type { ProjectilePool } from './projectilePool';
 
 export interface InputSnapshot {
   moveX: number;
   moveY: number;
+  pointerX: number | null;
+  pointerY: number | null;
+  firePrimary: boolean;
+  aimWorldOverride: Vector2 | null;
 }
 
 export interface CameraTarget {
   x: number;
   y: number;
+}
+
+export interface DamageEvent {
+  targetEntityId: EntityId;
+  sourceEntityId: EntityId;
+  amount: number;
 }
 
 export interface SimulationAdapters {
@@ -32,13 +49,30 @@ export interface EcsWorld {
   transforms: ComponentStore<TransformComponent>;
   kinematics: ComponentStore<KinematicsComponent>;
   inputIntents: ComponentStore<InputIntentComponent>;
+  aims: ComponentStore<AimComponent>;
+  weapons: ComponentStore<WeaponComponent>;
+  projectiles: ComponentStore<ProjectileComponent>;
+  projectileTags: ComponentStore<ProjectileTag>;
+  damageables: ComponentStore<DamageableComponent>;
+  collisionRadii: ComponentStore<CollisionRadiusComponent>;
   systems: RegisteredSystem[];
   adapters: SimulationAdapters;
   playerEntityId: EntityId | null;
+  deadEntities: Set<EntityId>;
+  damageQueue: DamageEvent[];
+  inputState: InputSnapshot;
+  projectilePool: ProjectilePool | null;
 }
 
 const createNoopAdapters = (): SimulationAdapters => ({
-  readInputSnapshot: () => ({ moveX: 0, moveY: 0 }),
+  readInputSnapshot: () => ({
+    moveX: 0,
+    moveY: 0,
+    pointerX: null,
+    pointerY: null,
+    firePrimary: false,
+    aimWorldOverride: null
+  }),
   writeCameraTarget: () => undefined
 });
 
@@ -50,12 +84,22 @@ export const createWorld = (adapters: Partial<SimulationAdapters> = {}): EcsWorl
     transforms: new Map(),
     kinematics: new Map(),
     inputIntents: new Map(),
+    aims: new Map(),
+    weapons: new Map(),
+    projectiles: new Map(),
+    projectileTags: new Map(),
+    damageables: new Map(),
+    collisionRadii: new Map(),
     systems: [],
     adapters: {
       readInputSnapshot: adapters.readInputSnapshot ?? defaults.readInputSnapshot,
       writeCameraTarget: adapters.writeCameraTarget ?? defaults.writeCameraTarget
     },
-    playerEntityId: null
+    playerEntityId: null,
+    deadEntities: new Set(),
+    damageQueue: [],
+    inputState: defaults.readInputSnapshot(),
+    projectilePool: null
   };
 };
 
