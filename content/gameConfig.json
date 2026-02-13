@@ -1,0 +1,8 @@
+{
+  "enemySpawnTestEnabled": true,
+  "enemySpawnPos": {
+    "x": 12,
+    "y": 12
+  },
+  "enemyId": "scout"
+}
