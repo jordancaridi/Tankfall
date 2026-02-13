@@ -33,22 +33,22 @@ export const createKeyboardInputTracker = (eventTarget: Window): KeyboardInputTr
     pressed.delete(event.code);
   };
 
-  const onMouseDown = (event: MouseEvent): void => {
+  const onPointerDown = (event: PointerEvent): void => {
     if (event.button === 0) {
       firePrimary = true;
     }
   };
 
-  const onMouseUp = (event: MouseEvent): void => {
+  const onPointerUp = (event: PointerEvent): void => {
     if (event.button === 0) {
       firePrimary = false;
     }
   };
 
-  eventTarget.addEventListener('keydown', onKeyDown);
-  eventTarget.addEventListener('keyup', onKeyUp);
-  eventTarget.addEventListener('mousedown', onMouseDown);
-  eventTarget.addEventListener('mouseup', onMouseUp);
+  eventTarget.addEventListener('keydown', onKeyDown, { capture: true });
+  eventTarget.addEventListener('keyup', onKeyUp, { capture: true });
+  eventTarget.addEventListener('pointerdown', onPointerDown, { capture: true });
+  eventTarget.addEventListener('pointerup', onPointerUp, { capture: true });
 
   return {
     getSnapshot: () => {
@@ -82,10 +82,10 @@ export const createKeyboardInputTracker = (eventTarget: Window): KeyboardInputTr
       simulatedInput = state;
     },
     dispose: () => {
-      eventTarget.removeEventListener('keydown', onKeyDown);
-      eventTarget.removeEventListener('keyup', onKeyUp);
-      eventTarget.removeEventListener('mousedown', onMouseDown);
-      eventTarget.removeEventListener('mouseup', onMouseUp);
+      eventTarget.removeEventListener('keydown', onKeyDown, { capture: true });
+      eventTarget.removeEventListener('keyup', onKeyUp, { capture: true });
+      eventTarget.removeEventListener('pointerdown', onPointerDown, { capture: true });
+      eventTarget.removeEventListener('pointerup', onPointerUp, { capture: true });
       pressed.clear();
     }
   };

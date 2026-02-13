@@ -4,6 +4,8 @@ import type { Vector2 } from '../components/TransformComponent';
 import type { EcsWorld } from '../world';
 import { queryEntities } from '../world';
 
+import { rotateToward } from './aimSystem';
+
 export const normalizeIntent = (intent: InputIntentComponent): Vector2 => {
   const magnitude = Math.hypot(intent.moveX, intent.moveY);
   if (magnitude <= 0) {
@@ -52,6 +54,13 @@ export const runMovementSystem = (world: EcsWorld, dtSeconds: number): void => {
     }
 
     updateVelocity(kinematics, intent);
+
+    if (kinematics.velocity.x !== 0 || kinematics.velocity.y !== 0) {
+      const targetRotation = Math.atan2(kinematics.velocity.x, kinematics.velocity.y);
+      const maxStep = kinematics.turnRateHull * dtSeconds;
+      transform.rotationHull = rotateToward(transform.rotationHull, targetRotation, maxStep);
+    }
+
     applyMovement(transform.position, kinematics.velocity, dtSeconds);
   });
 };

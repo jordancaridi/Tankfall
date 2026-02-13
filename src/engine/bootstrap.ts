@@ -228,7 +228,7 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
 
         mesh.isVisible = true;
         mesh.position.x = projectileTransform.position.x;
-        mesh.position.y = 0.8;
+        mesh.position.y = 1.35;
         mesh.position.z = projectileTransform.position.y;
       });
 
