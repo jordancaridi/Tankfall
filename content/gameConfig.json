@@ -1,5 +1,12 @@
 {
   "simHz": 60,
+  "worldBounds": {
+    "minX": -42,
+    "maxX": 42,
+    "minY": -30,
+    "maxY": 30
+  },
+  "worldBoundsPadding": 2,
   "director": {
     "maxActiveEnemies": 18,
     "spawnBudgetPerSec": 1.35,

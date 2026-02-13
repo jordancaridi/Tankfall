@@ -2,6 +2,13 @@ import * as gameConfigJson from '../../content/gameConfig.json';
 
 export interface GameConfig {
   simHz: number;
+  worldBounds: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+  worldBoundsPadding: number;
   director: {
     maxActiveEnemies: number;
     spawnBudgetPerSec: number;
