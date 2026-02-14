@@ -12,6 +12,10 @@ export interface EnemyDefinition {
   rangedDamage: number;
   rangedCooldown: number;
   rangedRange: number;
+  rangedProjectileSpeed: number;
+  rangedProjectileLifetime: number;
+  rangedProjectileRadius: number;
+  muzzleOffset: number;
 }
 
 interface EnemiesContentFile {

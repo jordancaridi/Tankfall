@@ -1,5 +1,6 @@
 import { assert } from 'chai';
 import { createEntity } from '../ecs/entity';
+import { createProjectilePool } from '../ecs/projectilePool';
 import { runAISystem } from '../ecs/systems/aiSystem';
 import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
 import { runEnemyRangedAttackSystem } from '../ecs/systems/enemyRangedAttackSystem';
@@ -37,6 +38,7 @@ const setupEnemy = (world = createWorld()) => {
   world.aiStates.set(enemyId, { state: 'acquire' });
   world.targets.set(enemyId, { targetEntityId: playerId });
   world.enemyArchetypes.set(enemyId, { enemyId: 'scout' });
+  world.projectilePool = createProjectilePool(world, 8);
 
   return { world, playerId, enemyId };
 };
@@ -87,20 +89,24 @@ describe('Enemy AI systems', () => {
     assert.closeTo(world.contactDamages.get(enemyId)!.cooldownRemaining, 0.5, 0.000001);
   });
 
-  it('applies ranged damage with cooldown timing in attack state', () => {
-    const { world, playerId, enemyId } = setupEnemy();
+  it('spawns ranged projectiles with cooldown timing in attack state', () => {
+    const { world, enemyId } = setupEnemy();
     world.aiStates.set(enemyId, { state: 'attack', attackCooldownRemainingSec: 0 });
     world.transforms.get(enemyId)!.position.y = 4;
 
     runEnemyRangedAttackSystem(world, 0.1);
-    assert.lengthOf(world.damageQueue, 1);
-    assert.deepInclude(world.damageQueue, { targetEntityId: playerId, sourceEntityId: enemyId, amount: 3 });
+    let activeProjectiles = Array.from(world.projectiles.values()).filter((projectile) => projectile.active);
+    assert.lengthOf(activeProjectiles, 1);
+    assert.equal(activeProjectiles[0].ownerEntityId, enemyId);
+    assert.equal(activeProjectiles[0].damage, 3);
 
     runEnemyRangedAttackSystem(world, 0.2);
-    assert.lengthOf(world.damageQueue, 1);
+    activeProjectiles = Array.from(world.projectiles.values()).filter((projectile) => projectile.active);
+    assert.lengthOf(activeProjectiles, 1);
 
     runEnemyRangedAttackSystem(world, 1.0);
-    assert.lengthOf(world.damageQueue, 2);
+    activeProjectiles = Array.from(world.projectiles.values()).filter((projectile) => projectile.active);
+    assert.lengthOf(activeProjectiles, 2);
   });
 
   it('does not fire ranged attack if target is out of ranged range', () => {
@@ -110,6 +116,7 @@ describe('Enemy AI systems', () => {
 
     runEnemyRangedAttackSystem(world, 1);
 
-    assert.lengthOf(world.damageQueue, 0);
+    const activeProjectiles = Array.from(world.projectiles.values()).filter((projectile) => projectile.active);
+    assert.lengthOf(activeProjectiles, 0);
   });
 });

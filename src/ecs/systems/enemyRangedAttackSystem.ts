@@ -1,4 +1,5 @@
 import { getEnemyDefinition } from '../../content/enemies';
+import { spawnProjectile } from '../projectilePool';
 import type { EcsWorld } from '../world';
 import { queryEntities } from '../world';
 
@@ -22,16 +23,30 @@ const distanceToTarget = (world: EcsWorld, entityId: number, targetEntityId: num
   return Math.hypot(target.position.x - source.position.x, target.position.y - source.position.y);
 };
 
+const normalizeDirection = (x: number, y: number): { x: number; y: number } => {
+  const magnitude = Math.hypot(x, y);
+  if (magnitude <= Number.EPSILON) {
+    return { x: 0, y: 1 };
+  }
+
+  return {
+    x: x / magnitude,
+    y: y / magnitude
+  };
+};
+
 export const runEnemyRangedAttackSystem = (world: EcsWorld, dtSeconds: number): void => {
-  const enemyIds = queryEntities(world.aiStates, world.targets, world.factions, world.enemyArchetypes);
+  const enemyIds = queryEntities(world.aiStates, world.targets, world.factions, world.enemyArchetypes, world.transforms);
 
   enemyIds.forEach((enemyId) => {
     const faction = world.factions.get(enemyId);
     const aiState = world.aiStates.get(enemyId);
     const target = world.targets.get(enemyId);
     const archetype = world.enemyArchetypes.get(enemyId);
+    const sourceTransform = world.transforms.get(enemyId);
+    const targetTransform = target ? world.transforms.get(target.targetEntityId) : null;
 
-    if (!faction || !aiState || !target || !archetype || faction.team !== 'enemy') {
+    if (!faction || !aiState || !target || !archetype || !sourceTransform || !targetTransform || faction.team !== 'enemy') {
       return;
     }
 
@@ -47,11 +62,28 @@ export const runEnemyRangedAttackSystem = (world: EcsWorld, dtSeconds: number): 
       return;
     }
 
-    world.damageQueue.push({
-      targetEntityId: target.targetEntityId,
-      sourceEntityId: enemyId,
-      amount: definition.rangedDamage
-    });
+    const normalizedDirection = normalizeDirection(
+      targetTransform.position.x - sourceTransform.position.x,
+      targetTransform.position.y - sourceTransform.position.y
+    );
+
+    const didSpawn =
+      spawnProjectile(world, {
+        ownerId: enemyId,
+        damage: definition.rangedDamage,
+        speed: definition.rangedProjectileSpeed,
+        lifetime: definition.rangedProjectileLifetime,
+        radius: definition.rangedProjectileRadius,
+        position: {
+          x: sourceTransform.position.x + normalizedDirection.x * definition.muzzleOffset,
+          y: sourceTransform.position.y + normalizedDirection.y * definition.muzzleOffset
+        },
+        direction: normalizedDirection
+      }) !== null;
+
+    if (!didSpawn) {
+      return;
+    }
 
     aiState.attackCooldownRemainingSec = definition.rangedCooldown;
   });

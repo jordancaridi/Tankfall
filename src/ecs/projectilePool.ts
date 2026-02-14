@@ -1,8 +1,19 @@
 import { createEntity, type EntityId } from './entity';
+import type { Vector2 } from './components/TransformComponent';
 import type { EcsWorld } from './world';
 
 export interface ProjectilePool {
   available: EntityId[];
+}
+
+export interface SpawnProjectileConfig {
+  ownerId: EntityId;
+  damage: number;
+  speed: number;
+  lifetime: number;
+  radius: number;
+  position: Vector2;
+  direction: Vector2;
 }
 
 export const createProjectilePool = (world: EcsWorld, size: number): ProjectilePool => {
@@ -44,4 +55,50 @@ export const borrowProjectile = (pool: ProjectilePool): EntityId | null => {
 
 export const releaseProjectile = (pool: ProjectilePool, entityId: EntityId): void => {
   pool.available.push(entityId);
+};
+
+const normalizeDirection = (direction: Vector2): Vector2 => {
+  const magnitude = Math.hypot(direction.x, direction.y);
+  if (magnitude <= Number.EPSILON) {
+    return { x: 0, y: 1 };
+  }
+
+  return {
+    x: direction.x / magnitude,
+    y: direction.y / magnitude
+  };
+};
+
+export const spawnProjectile = (world: EcsWorld, config: SpawnProjectileConfig): EntityId | null => {
+  if (world.projectilePool === null) {
+    return null;
+  }
+
+  const projectileEntityId = borrowProjectile(world.projectilePool);
+  if (projectileEntityId === null) {
+    return null;
+  }
+
+  const projectile = world.projectiles.get(projectileEntityId);
+  const projectileTransform = world.transforms.get(projectileEntityId);
+  if (!projectile || !projectileTransform) {
+    return null;
+  }
+
+  const normalizedDirection = normalizeDirection(config.direction);
+  projectile.ownerEntityId = config.ownerId;
+  projectile.damage = config.damage;
+  projectile.speed = config.speed;
+  projectile.lifetime = config.lifetime;
+  projectile.radius = config.radius;
+  projectile.direction.x = normalizedDirection.x;
+  projectile.direction.y = normalizedDirection.y;
+  projectile.age = 0;
+  projectile.active = true;
+
+  projectileTransform.position.x = config.position.x;
+  projectileTransform.position.y = config.position.y;
+  projectileTransform.rotationTurret = Math.atan2(normalizedDirection.x, normalizedDirection.y);
+
+  return projectileEntityId;
 };
