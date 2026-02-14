@@ -11,7 +11,11 @@
       "contactCooldown": 0.5,
       "rangedDamage": 3,
       "rangedCooldown": 1.2,
-      "rangedRange": 7
+      "rangedRange": 7,
+      "muzzleOffset": 1.0,
+      "rangedProjectileSpeed": 16,
+      "rangedProjectileLifetime": 1.6,
+      "rangedProjectileRadius": 0.3
     },
     {
       "id": "bruiser",
@@ -24,7 +28,11 @@
       "contactCooldown": 0.8,
       "rangedDamage": 4,
       "rangedCooldown": 1.5,
-      "rangedRange": 6
+      "rangedRange": 6,
+      "muzzleOffset": 1.0,
+      "rangedProjectileSpeed": 16,
+      "rangedProjectileLifetime": 1.6,
+      "rangedProjectileRadius": 0.3
     },
     {
       "id": "gunner",
@@ -37,7 +45,11 @@
       "contactCooldown": 0.65,
       "rangedDamage": 6,
       "rangedCooldown": 0.7,
-      "rangedRange": 10
+      "rangedRange": 10,
+      "muzzleOffset": 1.0,
+      "rangedProjectileSpeed": 16,
+      "rangedProjectileLifetime": 1.6,
+      "rangedProjectileRadius": 0.3
     }
   ]
 }
