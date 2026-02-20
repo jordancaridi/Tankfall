@@ -3,7 +3,7 @@ import type { EnemyAIState } from '../components/AIStateComponent';
 import type { EcsWorld } from '../world';
 import { queryEntities } from '../world';
 
-const ATTACK_COOLDOWN_WINDOW_SECONDS = 0.15;
+const ATTACK_RANGE_BUFFER_UNITS = 0.15;
 
 const getDistance = (world: EcsWorld, entityA: number, entityB: number): number | null => {
   const transformA = world.transforms.get(entityA);
@@ -24,7 +24,7 @@ export const evaluateEnemyState = (distanceToTarget: number | null, preferredRan
     return 'pursue';
   }
 
-  if (distanceToTarget <= preferredRange - ATTACK_COOLDOWN_WINDOW_SECONDS) {
+  if (distanceToTarget <= Math.max(0, preferredRange - ATTACK_RANGE_BUFFER_UNITS)) {
     return 'attack';
   }
 

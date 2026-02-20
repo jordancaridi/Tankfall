@@ -31,3 +31,5 @@ export * from './systems/contactDamageSystem';
 export * from './systems/damageSystem';
 export * from './systems/cleanupSystem';
 export * from './systems/cameraFollowSystem';
+export * from './systems/enemyMetrics';
+export * from './systems/spawnDirectorState';

@@ -3,8 +3,9 @@ import type { GameConfig } from '../../content/gameConfig';
 import { createEntity } from '../entity';
 import type { SpawnDirectorStateComponent } from '../components/SpawnDirectorStateComponent';
 import type { EcsWorld } from '../world';
+import { countActiveEnemies } from './enemyMetrics';
+import { SPAWN_DIRECTOR_ENTITY_ID } from './spawnDirectorState';
 
-const DIRECTOR_ENTITY_ID = 0;
 export interface DifficultyMultipliers {
   hp: number;
   damage: number;
@@ -58,7 +59,7 @@ export const selectWeightedEnemy = (
 };
 
 const getOrCreateDirectorState = (world: EcsWorld, seed: number): SpawnDirectorStateComponent => {
-  let state = world.spawnDirectorStates.get(DIRECTOR_ENTITY_ID);
+  let state = world.spawnDirectorStates.get(SPAWN_DIRECTOR_ENTITY_ID);
   if (!state) {
     state = {
       elapsedSec: 0,
@@ -67,21 +68,11 @@ const getOrCreateDirectorState = (world: EcsWorld, seed: number): SpawnDirectorS
       nextSpawnId: 1,
       rngState: normalizeSeed(seed)
     };
-    world.spawnDirectorStates.set(DIRECTOR_ENTITY_ID, state);
+    world.spawnDirectorStates.set(SPAWN_DIRECTOR_ENTITY_ID, state);
   }
 
   return state;
 };
-
-const countActiveEnemies = (world: EcsWorld): number =>
-  Array.from(world.factions.entries()).filter(([entityId, faction]) => {
-    if (faction.team !== 'enemy') {
-      return false;
-    }
-
-    const hp = world.damageables.get(entityId)?.hp ?? 0;
-    return hp > 0 && !world.deadEntities.has(entityId);
-  }).length;
 
 const spawnEnemy = (
   world: EcsWorld,
