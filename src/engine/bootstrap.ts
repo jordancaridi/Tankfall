@@ -216,7 +216,6 @@ export const bootstrapGame = (canvas: HTMLCanvasElement, runtimeConfig: RuntimeC
   const loop = createFixedTimestepLoop({
     updateSimulation: (fixedDtSeconds) => {
       updateSimulation(world, fixedDtSeconds);
-      void runtimeConfig.seed;
     },
     render: () => {
       const transform = world.playerEntityId === null ? undefined : world.transforms.get(world.playerEntityId);

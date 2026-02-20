@@ -1,12 +1,21 @@
 import { getEnemyDefinition } from '../../content/enemies';
+import { gameConfig } from '../../content/gameConfig';
 import { spawnProjectile } from '../projectilePool';
 import type { EcsWorld } from '../world';
 import { queryEntities } from '../world';
 
 export const updateAttackCooldown = (remaining: number, dtSeconds: number): number => Math.max(0, remaining - dtSeconds);
 
-export const hasLineOfSight = (): boolean => {
-  return true;
+export const hasLineOfSight = (
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number
+): boolean => {
+  const { minX, maxX, minY, maxY } = gameConfig.worldBounds;
+  const inBounds = (x: number, y: number): boolean => x >= minX && x <= maxX && y >= minY && y <= maxY;
+
+  return inBounds(sourceX, sourceY) && inBounds(targetX, targetY);
 };
 
 export const isTargetInRangedAttackRange = (distanceToTarget: number, rangedRange: number): boolean => {
@@ -58,7 +67,16 @@ export const runEnemyRangedAttackSystem = (world: EcsWorld, dtSeconds: number): 
 
     const definition = getEnemyDefinition(archetype.enemyId);
     const distance = distanceToTarget(world, enemyId, target.targetEntityId);
-    if (distance === null || !isTargetInRangedAttackRange(distance, definition.rangedRange) || !hasLineOfSight()) {
+    if (
+      distance === null ||
+      !isTargetInRangedAttackRange(distance, definition.rangedRange) ||
+      !hasLineOfSight(
+        sourceTransform.position.x,
+        sourceTransform.position.y,
+        targetTransform.position.x,
+        targetTransform.position.y
+      )
+    ) {
       return;
     }
 

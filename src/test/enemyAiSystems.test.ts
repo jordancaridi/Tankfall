@@ -1,9 +1,9 @@
 import { assert } from 'chai';
 import { createEntity } from '../ecs/entity';
 import { createProjectilePool } from '../ecs/projectilePool';
-import { runAISystem } from '../ecs/systems/aiSystem';
+import { evaluateEnemyState, runAISystem } from '../ecs/systems/aiSystem';
 import { runContactDamageSystem } from '../ecs/systems/contactDamageSystem';
-import { runEnemyRangedAttackSystem } from '../ecs/systems/enemyRangedAttackSystem';
+import { hasLineOfSight, runEnemyRangedAttackSystem } from '../ecs/systems/enemyRangedAttackSystem';
 import { computeSteeringIntent } from '../ecs/systems/steeringSystem';
 import { createWorld } from '../ecs/world';
 
@@ -44,6 +44,12 @@ const setupEnemy = (world = createWorld()) => {
 };
 
 describe('Enemy AI systems', () => {
+
+  it('uses a clamped attack threshold for tiny preferred ranges', () => {
+    assert.equal(evaluateEnemyState(0, 0.05, true), 'attack');
+    assert.equal(evaluateEnemyState(0.2, 0.05, true), 'pursue');
+  });
+
   it('transitions acquire to pursue when target exists', () => {
     const { world, enemyId } = setupEnemy();
 
@@ -87,6 +93,13 @@ describe('Enemy AI systems', () => {
     assert.lengthOf(world.damageQueue, 3);
     assert.deepInclude(world.damageQueue, { targetEntityId: playerId, sourceEntityId: enemyId, amount: 5 });
     assert.closeTo(world.contactDamages.get(enemyId)!.cooldownRemaining, 0.5, 0.000001);
+  });
+
+
+  it('line-of-sight fails when either endpoint is outside world bounds', () => {
+    assert.isTrue(hasLineOfSight(0, 0, 4, 4));
+    assert.isFalse(hasLineOfSight(-100, 0, 0, 0));
+    assert.isFalse(hasLineOfSight(0, 0, 0, 100));
   });
 
   it('spawns ranged projectiles with cooldown timing in attack state', () => {

@@ -7,6 +7,8 @@ import {
   createEnemySpawnSystem,
   selectWeightedEnemy
 } from '../ecs/systems/enemySpawnSystem';
+import { countActiveEnemies } from '../ecs/systems/enemyMetrics';
+import { getSpawnDirectorState } from '../ecs/systems/spawnDirectorState';
 import { createWorld } from '../ecs/world';
 
 const setupWorld = () => {
@@ -31,6 +33,27 @@ const countEnemyIds = (world: ReturnType<typeof createWorld>): number[] =>
     .sort((a, b) => a - b);
 
 describe('Spawn director systems', () => {
+
+  it('exposes director elapsed time through shared director state helper', () => {
+    const world = setupWorld();
+    const runSpawn = createEnemySpawnSystem(gameConfig, 55);
+
+    runSpawn(world, 0.5);
+
+    assert.closeTo(getSpawnDirectorState(world)?.elapsedSec ?? 0, 0.5, 0.000001);
+  });
+
+  it('counts active enemies via shared metrics helper', () => {
+    const world = setupWorld();
+    const runSpawn = createEnemySpawnSystem(gameConfig, 31);
+
+    for (let i = 0; i < 240; i += 1) {
+      runSpawn(world, 1 / 60);
+    }
+
+    assert.equal(countActiveEnemies(world), countEnemyIds(world).length);
+  });
+
   it('spawns deterministically for a seed and dt sequence', () => {
     const worldA = setupWorld();
     const worldB = setupWorld();
